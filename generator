@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Blueprint Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050505; color: #e2e8f0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="flex items-center justify-between border-b border-[#333] pb-6 mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-widest uppercase flex items-center">
+                    <svg class="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    Nexus Blueprint Generator
+                </h1>
+                <p class="text-xs text-[#666] font-mono mt-1">Struktur-Definition für Systemhäuser (V3-Manifest)</p>
+            </div>
+            <button onclick="exportJSON()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-lg text-sm transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                JSON Exportieren
+            </button>
+        </header>
+
+        <!-- Modul Parameter -->
+        <div class="bg-[#111] border border-[#222] p-6 rounded-xl shadow-xl mb-8">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-[#333] pb-2 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                1. Modul Parameter
+            </h2>
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-[#888] uppercase mb-2">Modul-Typ</label>
+                    <select id="moduleType" onchange="updateModulePrefix()" class="w-full bg-black border border-[#333] rounded px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 cursor-pointer">
+                        <option value="BP">Arbeitsprozess (Formular / Genehmigung)</option>
+                        <option value="ENT">Stammdaten (Tabelle / Entität)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#888] uppercase mb-2">Bezeichner</label>
+                    <div class="flex">
+                        <span id="prefixDisplay" class="bg-[#222] border border-[#333] border-r-0 rounded-l px-3 py-3 text-sm text-[#666] font-mono">BP_</span>
+                        <input id="moduleName" type="text" placeholder="URLAUBSANTRAG" class="flex-1 bg-black border border-[#333] rounded-r px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 uppercase font-mono" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datenfelder -->
+        <div class="bg-[#111] border border-[#222] p-6 rounded-xl shadow-xl">
+            <div class="flex items-center justify-between mb-4 border-b border-[#333] pb-2">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    2. Datenfelder (Struktur)
+                </h2>
+                <button onclick="addField()" class="text-xs bg-[#222] hover:bg-[#333] text-white px-3 py-1.5 rounded flex items-center transition-colors">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Feld hinzufügen
+                </button>
+            </div>
+
+            <div id="fieldsContainer" class="space-y-4">
+                <!-- Felder werden hier durch JS generiert -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let fields = [];
+
+        // Helfer für ERP-konforme Namen
+        function generateCleanName(rawName) {
+            return rawName.toLowerCase()
+                .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+                .replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '');
+        }
+
+        // Prefix im UI aktualisieren
+        function updateModulePrefix() {
+            const type = document.getElementById('moduleType').value;
+            document.getElementById('prefixDisplay').textContent = type + '_';
+            document.getElementById('moduleName').placeholder = type === 'BP' ? 'URLAUBSANTRAG' : 'LIEFERANT';
+        }
+
+        // Ein neues Feld zum State und DOM hinzufügen
+        function addField(initialData = null) {
+            const id = crypto.randomUUID();
+            const field = initialData || { id, name: '', label: '', type: 'String (Kurztext)', required: false, options: '' };
+            fields.push(field);
+            renderField(field);
+            updateIndices();
+        }
+
+        // Feld aus State und DOM entfernen
+        function removeField(id) {
+            fields = fields.filter(f => f.id !== id);
+            document.getElementById(`field-${id}`).remove();
+            updateIndices();
+        }
+
+        // Updates im State speichern
+        function handleInput(id, key, element) {
+            const field = fields.find(f => f.id === id);
+            if (!field) return;
+
+            field[key] = element.type === 'checkbox' ? element.checked : element.value;
+
+            // Auto-Generate DB Key
+            if (key === 'label') {
+                const nameInput = document.getElementById(`name-${id}`);
+                const cleanName = generateCleanName(element.value);
+                field.name = cleanName;
+                nameInput.textContent = `DB-Key: ${cleanName || 'wird generiert'}`;
+            }
+
+            // Options-Input ein/ausblenden
+            if (key === 'type') {
+                const optionsDiv = document.getElementById(`options-${id}`);
+                optionsDiv.style.display = element.value === 'Enum (Auswahl)' ? 'block' : 'none';
+            }
+        }
+
+        // Indizes (1, 2, 3...) an der Seite aktualisieren
+        function updateIndices() {
+            const badges = document.querySelectorAll('.field-index-badge');
+            badges.forEach((badge, idx) => badge.textContent = idx + 1);
+        }
+
+        // HTML für ein einzelnes Feld erstellen
+        function renderField(field) {
+            const container = document.getElementById('fieldsContainer');
+            
+            const fieldHtml = `
+                <div id="field-${field.id}" class="flex flex-col gap-3 bg-black border border-[#333] p-4 rounded-lg group">
+                    <div class="flex gap-4 items-start">
+                        <div class="field-index-badge w-8 h-8 shrink-0 bg-[#222] text-[#888] rounded flex items-center justify-center text-xs font-bold font-mono">
+                            0
+                        </div>
+                        <div class="flex-1 grid grid-cols-12 gap-4">
+                            <div class="col-span-4">
+                                <input type="text" oninput="handleInput('${field.id}', 'label', this)" placeholder="Anzeigename (z.B. Vorname)" class="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" value="${field.label}">
+                                <div id="name-${field.id}" class="text-[9px] text-[#666] font-mono mt-1 px-1">DB-Key: ${field.name || 'wird generiert'}</div>
+                            </div>
+                            <div class="col-span-4">
+                                <select onchange="handleInput('${field.id}', 'type', this)" class="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-[#ccc] focus:outline-none focus:border-blue-500 cursor-pointer">
+                                    <optgroup label="Standard-Eingaben" class="text-blue-400 bg-black">
+                                        <option value="String (Kurztext)">Kurztext (z.B. Name)</option>
+                                        <option value="Text (Lang)">Langtext (Mehrzeilig)</option>
+                                        <option value="E-Mail Adresse">E-Mail Adresse</option>
+                                        <option value="Telefonnummer">Telefonnummer</option>
+                                    </optgroup>
+                                    <optgroup label="Zahlen & Finanzen" class="text-emerald-400 bg-black">
+                                        <option value="Number (Zahl)">Zahl (Dezimal)</option>
+                                        <option value="Currency (Währung)">Währung (€)</option>
+                                    </optgroup>
+                                    <optgroup label="Datum & Zeit" class="text-amber-400 bg-black">
+                                        <option value="Date (Datum)">Datum</option>
+                                        <option value="Date (Datum & Zeit)">Datum & Uhrzeit</option>
+                                        <option value="Time (Nur Uhrzeit)">Nur Uhrzeit</option>
+                                        <option value="Interval (Dauer/Zeitspanne)">Zeitspanne / Dauer</option>
+                                    </optgroup>
+                                    <optgroup label="Entscheidung & Auswahl" class="text-purple-400 bg-black">
+                                        <option value="Boolean (Ja/Nein)">Checkbox (Ja/Nein)</option>
+                                        <option value="Enum (Auswahl)">Dropdown-Menü (Eigene Werte)</option>
+                                    </optgroup>
+                                    <optgroup label="Hardware & Medien" class="text-rose-400 bg-black">
+                                        <option value="File (Anhang)">Datei-Upload (Dokumente)</option>
+                                        <option value="Foto (Upload/URL)">Kamera / Foto-Upload</option>
+                                        <option value="Foto Galerie (Multi-Upload)">Foto-Galerie (Mehrere Bilder)</option>
+                                        <option value="Digitale Signatur (E-Sign)">Digitale Unterschrift</option>
+                                        <option value="QR / Barcode Scanner">QR / Barcode Scanner</option>
+                                        <option value="Geo-Location (GPS)">GPS Standort-Erfassung</option>
+                                        <option value="Farbwert (Hex/RGB)">Farbwähler (Hex/RGB)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-span-3 flex items-center h-9">
+                                <label class="flex items-center text-xs text-[#888] cursor-pointer hover:text-white">
+                                    <input type="checkbox" onchange="handleInput('${field.id}', 'required', this)" class="mr-2 accent-blue-500 cursor-pointer" ${field.required ? 'checked' : ''}>
+                                    Pflichtfeld
+                                </label>
+                            </div>
+                        </div>
+                        <button onclick="removeField('${field.id}')" class="text-[#444] hover:text-red-500 transition-colors p-2 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div id="options-${field.id}" style="display: none;" class="ml-12 pl-4 border-l-2 border-blue-500/30">
+                        <input type="text" oninput="handleInput('${field.id}', 'options', this)" placeholder="Optionen mit Komma trennen (z.B. Apfel, Birne, Banane)" class="w-full bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-blue-400 font-mono focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', fieldHtml);
+        }
+
+        // V3 JSON kompilieren und Download triggern
+        function exportJSON() {
+            const rawName = document.getElementById('moduleName').value.trim();
+            if (!rawName) {
+                alert('Bitte geben Sie einen Namen für das Modul ein.');
+                return;
+            }
+
+            const moduleType = document.getElementById('moduleType').value;
+            const cleanModuleName = `${moduleType}_${rawName.toUpperCase().replace(/[^A-Z0-9_]/g, '_')}`;
+
+            const mappedFields = fields.map(f => {
+                const fieldExport = {
+                    id: f.id,
+                    name: f.name || generateCleanName(f.label) || 'unbenannt',
+                    label: f.label || 'Unbenannt',
+                    type: f.type,
+                    required: f.required,
+                    direction: 'INPUT (Erwartet Daten)',
+                    interactionMode: 'TYPE_NEW'
+                };
+
+                if (f.type === 'Enum (Auswahl)' && f.options) {
+                    fieldExport.typeConfig = f.options.split(',').map(s => s.trim()).filter(Boolean).join(', ');
+                }
+
+                return fieldExport;
+            });
+
+            const manifest = {
+                moduleId: cleanModuleName,
+                version: "3.0-AOT",
+                compiledAt: new Date().toISOString(),
+                templateType: "STANDARD_FORMULAR",
+                routingRules: moduleType === 'BP' 
+                    ? { scope: "DEPARTMENT", department: "Unassigned", user: null }
+                    : { scope: "GLOBAL", department: "Unassigned", user: null },
+                fields: mappedFields,
+                reactions: []
+            };
+
+            const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${cleanModuleName}_Manifest.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Init: Startet mit einem leeren Feld
+        addField({ id: crypto.randomUUID(), name: '', label: '', type: 'String (Kurztext)', required: true, options: '' });
+    </script>
+</body>
+</html>
